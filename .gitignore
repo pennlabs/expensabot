@@ -3,3 +3,4 @@
 .vscode
 output.docx
 expense/receipt*
+__pycache__/

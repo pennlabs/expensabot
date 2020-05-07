@@ -1,7 +1,5 @@
-# Airtable Utils
+# Expenseabot
 
-Utilities to automate certain tasks that Penn Labs performs using Airtable.
+[![CircleCI](https://circleci.com/gh/pennlabs/expensabot.svg?style=shield)](https://circleci.com/gh/pennlabs/expensabot)
 
-Ideas:
-- Automatically assign readers in Recruiting base.
-- Automatic expense reports
+Expenseabot is a small utility we use to generate and send expense reports using an internal expense-tracking form. Expenseabot consists of a webservice and a Google Apps Script to POST to the webservice whenever our internal form is filled out.

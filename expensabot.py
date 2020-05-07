@@ -72,6 +72,7 @@ def send_report(doc_stream, receipt_stream, data):
 
     msg["From"] = from_email
     msg["To"] = to_email
+    msg["Cc"] = copy_emails
 
     msg.set_content("Hello! This is an automated expense report from Penn Labs.")
 

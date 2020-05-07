@@ -4,6 +4,7 @@ image_tag: latest
 applications:
   - name: expensabot
     image: pennlabs/expensabot
+    secret: expensabot
     ingress:
       hosts:
         - host: expensabot.pennlabs.org

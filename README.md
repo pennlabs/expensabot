@@ -8,4 +8,4 @@ Expenseabot is a small utility we use to generate and send expense reports using
 
 The Flask portion of expensabot just needs to be deployed to some url. A few environment variables will need to be configured. See `expensabot.py` for more information.
 
-The Javascript (Google Apps Script) needs to be added to the finances spreadsheet. When the spreadsheet is open, go to Tools->Script Editor, create a new project and paste in the contents of `expensabot.js`. Finally, add a trigger to run the `submitExpense` function after the expense form is filled out.
+The Javascript (Google Apps Script) needs to be added to the finances spreadsheet. When the spreadsheet is open, go to Tools->Script Editor, create a new project and paste in the contents of `expensabot.js`. Finally, add a trigger to run the `submitExpense` function after the expense form is filled out though Edit->Current project's triggers->Add trigger->Select event type->On form submit

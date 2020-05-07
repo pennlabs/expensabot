@@ -1,6 +1,25 @@
-.DS_Store
-.env
-.vscode
+# IDE files
+.vscode/
+.idea/
+
+# Python files
+__pycache__/
+*.pyc
+
+# Distribution
+build/
+dist/
+*.egg-info/
+
+# Code testing/coverage
+.tox
+test-results/
+.coverage
+htmlcov/
+
+# Project specific
 output.docx
 expense/receipt*
-__pycache__/
+
+# Mac
+.DS_Store

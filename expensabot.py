@@ -6,16 +6,18 @@ import smtplib
 from cgi import parse_header
 from datetime import date
 from email.message import EmailMessage
+from functools import wraps
 from io import BytesIO
 
 import requests
 from docx import Document
-from flask import Flask, Response, request
+from flask import Flask, Response, abort, request
 
 
 app = Flask(__name__)
 
 secret_key = os.environ.get("SECRET_KEY", "foo")
+api_key = os.environ.get("API_KEY")
 
 from_email = os.environ.get("SENDER_ADDRESS")
 to_email = os.environ.get("RECIPIENT_ADDRESS")
@@ -27,12 +29,25 @@ username = os.environ.get("SMTP_USERNAME")
 password = os.environ.get("SMTP_PASSWORD")
 
 
+def require_apikey(view_function):
+    """Function to confirm request contains a valid API key"""
+
+    @wraps(view_function)
+    def decorated_function(*args, **kwargs):
+        if request.headers.get("Authorization", "") == f"Token {api_key}":
+            return view_function(*args, **kwargs)
+        abort(401)
+
+    return decorated_function
+
+
 @app.route("/", methods=["GET"])
 def index():
     return "alive"
 
 
 @app.route("/submit", methods=["GET", "POST"])
+@require_apikey
 def submit():
     fields = ["name", "email", "supplier", "date", "amount", "description", "receipt_id"]
     if request.method == "GET":

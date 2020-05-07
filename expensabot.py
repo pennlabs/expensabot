@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import os
-import re
 import shutil
 import smtplib
 from cgi import parse_header
@@ -99,7 +98,7 @@ def generate_report(data):
 
     tables[0].cell(1, 0).text = data["name"]
     tables[0].cell(1, 1).text = data["email"]
-    tables[0].cell(1, 2).text = date.today().strftime("%-m/%d/%Y")
+    tables[0].cell(1, 2).text = date.today().strftime("%-m/%-d/%Y")
 
     tables[2].cell(1, 0).text = data["supplier"]
     tables[2].cell(1, 1).text = data["date"]
@@ -107,24 +106,22 @@ def generate_report(data):
 
     tables[3].cell(1, 0).text = data["description"]
 
-    url = None
-    id_match = re.search(r"id=([0-9a-zA-Z]+)", data["receipt_id"])
-    if id_match is not None:
-        url = f"https://drive.google.com/uc?id={id_match.group(1)}&export=download"
+    receipt_id = data["receipt_id"].split("id=")[1]
+    url = f"https://drive.google.com/uc?id={receipt_id}&export=download"
 
     d = BytesIO()
     i = BytesIO()
 
     document.save(d)
     d.seek(0)
-    if url is None:
+
+    try:
+        with requests.get(url, stream=True) as r:
+            mtype, _ = parse_header(r.headers.get("content-type"))
+            shutil.copyfileobj(r.raw, i)
+        return d, (i, mtype)
+    except:
         return d, (None, None)
-
-    with requests.get(url, stream=True) as r:
-        mtype, _ = parse_header(r.headers.get("content-type"))
-        shutil.copyfileobj(r.raw, i)
-
-    return d, (i, mtype)
 
 
 if __name__ == "__main__":

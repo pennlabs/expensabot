@@ -29,7 +29,7 @@ password = os.environ.get("SMTP_PASSWORD")
 
 @app.route("/", methods=["GET"])
 def index():
-    return "hello, world!"
+    return "alive"
 
 
 @app.route("/submit", methods=["GET", "POST"])
@@ -113,16 +113,3 @@ def generate_report(data):
 
 if __name__ == "__main__":
     app.run()
-"""
-if __name__ == "__main__":
-    generate_receipt(
-        {
-            "name": "Davis Haupt",
-            "email": "dhaupt@seas.upenn.edu",
-            "supplier": "Digital Ocean",
-            "date": "4/1/2020",
-            "amount": "$164.10",
-            "description": "Application Hosting",
-        }
-    )
-"""

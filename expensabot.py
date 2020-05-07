@@ -1,30 +1,27 @@
-#!/user/bin/python
-from datetime import date
-import requests
-import shutil
-import re
+#!/usr/bin/env python
 import os
-from io import BytesIO, StringIO
-
-from flask import Flask, request, Response
-
-from PIL import Image
-
-from docx import Document
-from docx.shared import Inches
-from flask.helpers import send_file
-from email.message import EmailMessage
-from cgi import parse_header
+import re
+import shutil
 import smtplib
+from cgi import parse_header
+from datetime import date
+from email.message import EmailMessage
+from functools import wraps
+from io import BytesIO
+
+import requests
+from docx import Document
+from flask import Flask, Response, abort, request
 
 
 app = Flask(__name__)
 
 secret_key = os.environ.get("SECRET_KEY", "foo")
+api_key = os.environ.get("API_KEY")
 
 from_email = os.environ.get("SENDER_ADDRESS")
 to_email = os.environ.get("RECIPIENT_ADDRESS")
-copy_emails = os.environ.get("COPY_ADDRESSES").split(',')
+copy_emails = os.environ.get("COPY_ADDRESSES", ",").split(",")
 
 host = os.environ.get("SMTP_HOST")
 port = os.environ.get("SMTP_PORT")
@@ -32,16 +29,30 @@ username = os.environ.get("SMTP_USERNAME")
 password = os.environ.get("SMTP_PASSWORD")
 
 
+def require_apikey(view_function):
+    """Function to confirm request contains a valid API key"""
+
+    @wraps(view_function)
+    def decorated_function(*args, **kwargs):
+        if request.headers.get("Authorization", "") == f"Token {api_key}":
+            return view_function(*args, **kwargs)
+        abort(401)
+
+    return decorated_function
+
+
 @app.route("/", methods=["GET"])
 def index():
-    return "hello, world!"
+    return "alive"
+
 
 @app.route("/submit", methods=["GET", "POST"])
+@require_apikey
 def submit():
     fields = ["name", "email", "supplier", "date", "amount", "description", "receipt_id"]
     if request.method == "GET":
         s = '<form method="post">'
-        s = s + ''.join([f'{f}: <input name="{f}" /> <br />' for f in fields])
+        s = s + "".join([f'{f}: <input name="{f}" /> <br />' for f in fields])
         s = s + "<input type='submit' /></form>"
         return s
     if request.method == "POST":
@@ -49,33 +60,36 @@ def submit():
             return Response(status=400)
         doc_stream, receipt_stream = generate_report(request.form)
         send_report(doc_stream, receipt_stream, request.form)
-        return 'message sent!'
-       
+        return "message sent!"
+
+
 def send_report(doc_stream, receipt_stream, data):
     msg = EmailMessage()
 
-    msg['Subject'] = f'Penn Labs Expense report for purchase from {data["supplier"]} on {data["date"]}'
+    msg[
+        "Subject"
+    ] = f'Penn Labs Expense report for purchase from {data["supplier"]} on {data["date"]}'
 
-    msg['From'] = from_email
-    msg['To'] = to_email
+    msg["From"] = from_email
+    msg["To"] = to_email
 
     msg.set_content("Hello! This is an automated expense report from Penn Labs.")
 
-    msg.add_attachment(doc_stream.read(), maintype='application', subtype='vnd.openxmlformats-officedocument.wordprocessingml.document')
+    msg.add_attachment(
+        doc_stream.read(),
+        maintype="application",
+        subtype="vnd.openxmlformats-officedocument.wordprocessingml.document",
+    )
 
     r, t = receipt_stream
     if r is not None:
-        maint, subt = t.split('/')
-        msg.add_attachment(r.read(),
-                           maintype=maint,
-                           subtype=subt)
+        maint, subt = t.split("/")
+        msg.add_attachment(r.read(), maintype=maint, subtype=subt)
 
     with smtplib.SMTP(host, 587) as server:
         server.login(username, password)
         server.send_message(msg)
         return True
-
-
 
 
 def generate_report(data):
@@ -92,9 +106,6 @@ def generate_report(data):
 
     tables[3].cell(1, 0).text = data["description"]
 
-
-    local_filename = "expense/receipt"
-
     url = None
     id_match = re.search(r"id=([0-9a-zA-Z]+)", data["receipt_id"])
     if id_match is not None:
@@ -109,22 +120,11 @@ def generate_report(data):
         return d, (None, None)
 
     with requests.get(url, stream=True) as r:
-        mtype, _ = parse_header(r.headers.get('content-type'))
+        mtype, _ = parse_header(r.headers.get("content-type"))
         shutil.copyfileobj(r.raw, i)
 
     return d, (i, mtype)
 
 
-"""
 if __name__ == "__main__":
-    generate_receipt(
-        {
-            "name": "Davis Haupt",
-            "email": "dhaupt@seas.upenn.edu",
-            "supplier": "Digital Ocean",
-            "date": "4/1/2020",
-            "amount": "$164.10",
-            "description": "Application Hosting",
-        }
-    )
-"""
+    app.run()

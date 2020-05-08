@@ -79,6 +79,7 @@ def send_report(doc_stream, receipt_stream, data):
         doc_stream.read(),
         maintype="application",
         subtype="vnd.openxmlformats-officedocument.wordprocessingml.document",
+        filename="Expense.docx",
     )
 
     r, t = receipt_stream

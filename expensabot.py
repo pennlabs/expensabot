@@ -73,7 +73,9 @@ def send_report(doc_stream, receipt_stream, data):
     msg["To"] = to_email
     msg["Cc"] = copy_emails
 
-    msg.set_content("Hello! This is an automated expense report from Penn Labs.")
+    msg.set_content(
+        "Hi,\n\nWe're attaching a completed Penn Labs expense report.\n\nBest,\nThe Penn Labs Directors"  # noqa
+    )
 
     msg.add_attachment(
         doc_stream.read(),
@@ -85,7 +87,7 @@ def send_report(doc_stream, receipt_stream, data):
     r, t = receipt_stream
     if r is not None:
         maint, subt = t.split("/")
-        msg.add_attachment(r.read(), maintype=maint, subtype=subt)
+        msg.add_attachment(r.read(), maintype=maint, subtype=subt, filename=f"Receipt.{subt}")
 
     with smtplib.SMTP(host, 587) as server:
         server.login(username, password)
@@ -120,8 +122,9 @@ def generate_report(data):
         with requests.get(url, stream=True) as r:
             mtype, _ = parse_header(r.headers.get("content-type"))
             shutil.copyfileobj(r.raw, i)
+            i.seek(0)
         return d, (i, mtype)
-    except:
+    except:  # noqa
         return d, (None, None)
 
 

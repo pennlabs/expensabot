@@ -17,6 +17,7 @@ requests = "*"
 pillow = "*"
 flask = "*"
 uwsgi = "*"
+schema = "*"
 
 [requires]
 python_version = "3"

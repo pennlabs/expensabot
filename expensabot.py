@@ -9,11 +9,17 @@ from functools import wraps
 from io import BytesIO
 
 import requests
+import logging
+
 from docx import Document
+from docx.shared import Pt
+from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
+
 from flask import Flask, Response, abort, request
 
 
 app = Flask(__name__)
+logging.basicConfig(filename='error.log', level=logging.ERROR)
 
 secret_key = os.environ.get("SECRET_KEY", "foo")
 api_key = os.environ.get("API_KEY")
@@ -81,7 +87,7 @@ def send_report(doc_stream, receipt_stream, data, is_test=False):
         doc_stream.read(),
         maintype="application",
         subtype="vnd.openxmlformats-officedocument.wordprocessingml.document",
-        filename="Expense.docx",
+        filename="Expense (Receipt Attached).docx",
     )
 
     r, t = receipt_stream
@@ -115,18 +121,29 @@ def generate_report(data):
     d = BytesIO()
     i = BytesIO()
 
-    document.save(d)
-    d.seek(0)
-
+    paragraph = document.add_paragraph()
+    run = paragraph.add_run("Receipt:")
+    run.bold = True
+    run.font.size = Pt(12)
+    paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
+    receipt_stream = None
     try:
         with requests.get(url, stream=True) as r:
             mtype, _ = parse_header(r.headers.get("content-type"))
+            img = BytesIO(r.content)
+            document.add_picture(img, width=Pt(400))
+
             shutil.copyfileobj(r.raw, i)
             i.seek(0)
-        return d, (i, mtype)
-    except:  # noqa
-        return d, (None, None)
+            receipt_stream = (i, mtype)
+    except Exception as e:
+        logging.error(f"Error while adding receipt image: {str(e)}")
+        receipt_stream = (None, None)
 
+    document.save(d)
+    d.seek(0)
+
+    return d, receipt_stream
 
 if __name__ == "__main__":
     app.run()

@@ -58,11 +58,11 @@ def submit():
         if not all([f in request.form for f in fields]):
             return Response(status=400)
         doc_stream, receipt_stream = generate_report(request.form)
-        send_report(doc_stream, receipt_stream, request.form)
+        send_report(doc_stream, receipt_stream, request.form, request.args.get("is_test", False))
         return "message sent!"
 
 
-def send_report(doc_stream, receipt_stream, data):
+def send_report(doc_stream, receipt_stream, data, is_test=False):
     msg = EmailMessage()
 
     msg[
@@ -70,7 +70,7 @@ def send_report(doc_stream, receipt_stream, data):
     ] = f'Penn Labs Expense report for purchase from {data["supplier"]} on {data["date"]}'
 
     msg["From"] = from_email
-    msg["To"] = to_email
+    msg["To"] = to_email if not is_test else from_email
     msg["Cc"] = copy_emails
 
     msg.set_content(

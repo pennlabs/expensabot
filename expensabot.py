@@ -87,7 +87,7 @@ def send_report(doc_stream, receipt_stream, data, is_test=False):
         doc_stream.read(),
         maintype="application",
         subtype="vnd.openxmlformats-officedocument.wordprocessingml.document",
-        filename="Expense (Receipt Attached).docx",
+        filename=f"{data['supplier']} Expense Report (Receipt Attached).docx",
     )
 
     r, t = receipt_stream
